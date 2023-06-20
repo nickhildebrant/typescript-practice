@@ -29,8 +29,7 @@ function KilogramToPounds(weight) {
     // Narrowing
     if (typeof weight === 'number')
         return weight * 2.2;
-    if (typeof weight === 'string')
-        return parseInt(weight) * 2.2;
+    return parseInt(weight) * 2.2;
 }
 KilogramToPounds(10);
 KilogramToPounds('10kg');
@@ -41,7 +40,7 @@ let textBox = {
 let quantity = 100;
 function greet(name) {
     if (name)
-        console.log(name.toUpperCase);
+        console.log(name.toUpperCase());
     else
         console.log('Who are you?');
 }

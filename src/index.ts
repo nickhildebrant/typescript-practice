@@ -41,7 +41,8 @@ let employee : Employee = {
 function KilogramToPounds(weight: number | string) {
     // Narrowing
     if(typeof weight === 'number') return weight * 2.2;
-    if(typeof weight === 'string') return parseInt(weight) * 2.2;
+    
+    return parseInt(weight) * 2.2;
 }
 
 KilogramToPounds(10);
@@ -68,7 +69,7 @@ let quantity: Quantity = 100;
 type Metric = 'cm' | 'inch';
 
 function greet(name: string | null | undefined) {
-    if(name) console.log(name.toUpperCase);
+    if(name) console.log(name.toUpperCase());
     else console.log('Who are you?');
 }
 
