@@ -1,24 +1,23 @@
-import './style.css'
-import typescriptLogo from './typescript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.ts'
+import * as THREE from 'three'
+import GameScene from './GameScene'
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Vite + TypeScript</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
-  </div>
-`
+const width = window.innerWidth
+const height = window.innerHeight
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+const renderer = new THREE.WebGL1Renderer({
+  canvas: document.getElementById('app') as HTMLCanvasElement
+})
+renderer.setSize(width, height)
+
+const mainCamera = new THREE.PerspectiveCamera(60, width / height, 0.1, 100)
+
+const scene = new GameScene()
+scene.initializeScene()
+
+function gameTick()
+{
+  renderer.render(scene, mainCamera)
+  requestAnimationFrame(gameTick)
+}
+
+gameTick()
