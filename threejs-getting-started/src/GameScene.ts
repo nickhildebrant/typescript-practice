@@ -29,7 +29,7 @@ export default class GameScene extends THREE.Scene
         const targetMaterial = await this.materialLoader.loadAsync('assets/targetA.mtl')
         targetMaterial.preload()
 
-        this.bulletMaterial = await this.materialLoader.loadAsync('assets/foamBulletA-low.mtl')
+        this.bulletMaterial = await this.materialLoader.loadAsync('assets/foamBulletB.mtl')
         this.bulletMaterial.preload()
 
         const redMaterial = new THREE.MeshPhongMaterial({color: 0xFF0000})
@@ -95,25 +95,22 @@ export default class GameScene extends THREE.Scene
         if(this.keydown.has('w') || this.keydown.has('arrowup')) this.blaster.position.add(direction.clone().multiplyScalar(speed))
         if(this.keydown.has('s') || this.keydown.has('arrowndown')) this.blaster.position.add(direction.clone().multiplyScalar(-speed))
 
-        const shiftKey = this.keydown.has('shift')
-
         // controls turning the player/camera
-        if(!shiftKey)
-        {
-            if(this.keydown.has('a') || this.keydown.has('arrowleft')) this.blaster.rotateY(0.02)
-            if(this.keydown.has('d') || this.keydown.has('arrowright')) this.blaster.rotateY(-0.02)
-        }
+        if(this.keydown.has('arrowleft')) this.blaster.rotateY(0.02)
+        if(this.keydown.has('arrowright')) this.blaster.rotateY(-0.02)
+
 
         // controls strafing
-        if(shiftKey)
-        {
-            const strafeDirection = direction.clone()
-            const upVector = new THREE.Vector3(0, 1, 0)
+        const strafeDirection = direction.clone()
+        const upVector = new THREE.Vector3(0, 1, 0)
 
-            if(this.keydown.has('a') || this.keydown.has('arrowleft')) this.blaster.position.add(strafeDirection.applyAxisAngle(upVector, Math.PI * 0.5).multiplyScalar(speed))
+        if(this.keydown.has('a')) this.blaster.position.add(strafeDirection.applyAxisAngle(upVector, Math.PI / 2).multiplyScalar(speed))
 
-            if(this.keydown.has('d') || this.keydown.has('arrowright')) this.blaster.position.add(strafeDirection.applyAxisAngle(upVector, Math.PI * -0.5).multiplyScalar(speed))
-        }
+        if(this.keydown.has('d')) this.blaster.position.add(strafeDirection.applyAxisAngle(upVector, -Math.PI / 2).multiplyScalar(speed))
+
+
+        // when space is pressed the gun shoots
+        if(this.keydown.has(' ')) this.createBullet()
     }
 
     update()
@@ -127,7 +124,7 @@ export default class GameScene extends THREE.Scene
 
         const modelRoot = await this.objectLoader.loadAsync('assets/targetA.obj')
 
-        modelRoot.rotateY(Math.PI * 0.5)
+        modelRoot.rotateY(Math.PI / 2)
 
         return modelRoot
     }
@@ -143,10 +140,28 @@ export default class GameScene extends THREE.Scene
         return modelRoot
     }
 
-    private async create()
+    private async createBullet()
     {
         if(!this.blaster) return
 
         if(this.bulletMaterial) this.objectLoader.setMaterials(this.bulletMaterial)
+
+        const bulletModel = await this.objectLoader.loadAsync('assets/foamBulletB.obj')
+
+        this.camera.getWorldDirection(this.directionVector)
+
+        const boundingBox = new THREE.Box3().setFromObject(this.blaster)
+        const size = boundingBox.getSize(new THREE.Vector3())
+
+        const bulletPosition = this.blaster.position.clone()
+        bulletPosition.y += 0.06
+
+        bulletModel.position.add(bulletPosition.add(this.directionVector.clone().multiplyScalar(size.z / 2)))
+
+        // rotates the bullets to match the location of the gun
+        bulletModel.children.forEach(child => child.rotateX(-Math.PI / 2))
+        bulletModel.rotation.copy(this.blaster.rotation)
+
+        this.add(bulletModel)
     }
 }
