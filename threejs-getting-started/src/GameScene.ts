@@ -1,5 +1,7 @@
 import * as THREE from 'three'
 
+import Bullet from './Bullet'
+
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
 
@@ -10,12 +12,18 @@ export default class GameScene extends THREE.Scene
 
     private readonly camera: THREE.PerspectiveCamera
     private directionVector = new THREE.Vector3()
+    private readonly turnSpeed: number = 0.02
+    private readonly movementSpeed: number = 0.1
 
     private readonly keydown = new Set<string>()
 
     private blaster?: THREE.Group
-
     private bulletMaterial?: MTLLoader.MaterialCreator
+
+    private bullets: Bullet[] = []
+    private readonly bulletSpeed: number = 0.2
+
+    private targets: THREE.Group[] = []
 
     constructor(camera: THREE.PerspectiveCamera)
     {
@@ -53,6 +61,7 @@ export default class GameScene extends THREE.Scene
         target4.position.z = -3
 
         this.add(target1, target2, target3, target4)
+        this.targets.push(target1, target2, target3, target4)
 
         this.blaster = await this.createBlaster()
         this.add(this.blaster)
@@ -80,6 +89,15 @@ export default class GameScene extends THREE.Scene
 
     private handleKeyUp = (event: KeyboardEvent) => {
         this.keydown.delete(event.key.toLowerCase())
+
+        // when space is pressed the gun shoots
+        if(event.key === ' ') this.createBullet()
+    }
+
+    update()
+    {
+        this.updateInput()
+        this.updateBullets()
     }
 
     updateInput()
@@ -89,33 +107,53 @@ export default class GameScene extends THREE.Scene
         const direction = this.directionVector
         this.camera.getWorldDirection(direction)
 
-        const speed = 0.1
-
         // controls forward and backward movement
-        if(this.keydown.has('w') || this.keydown.has('arrowup')) this.blaster.position.add(direction.clone().multiplyScalar(speed))
-        if(this.keydown.has('s') || this.keydown.has('arrowndown')) this.blaster.position.add(direction.clone().multiplyScalar(-speed))
+        if(this.keydown.has('w') || this.keydown.has('arrowup')) this.blaster.position.add(direction.clone().multiplyScalar(this.movementSpeed))
+        if(this.keydown.has('s') || this.keydown.has('arrowndown')) this.blaster.position.add(direction.clone().multiplyScalar(-this.movementSpeed))
 
         // controls turning the player/camera
-        if(this.keydown.has('arrowleft')) this.blaster.rotateY(0.02)
-        if(this.keydown.has('arrowright')) this.blaster.rotateY(-0.02)
+        if(this.keydown.has('arrowleft')) this.blaster.rotateY(this.turnSpeed)
+        if(this.keydown.has('arrowright')) this.blaster.rotateY(-this.turnSpeed)
 
 
         // controls strafing
         const strafeDirection = direction.clone()
         const upVector = new THREE.Vector3(0, 1, 0)
 
-        if(this.keydown.has('a')) this.blaster.position.add(strafeDirection.applyAxisAngle(upVector, Math.PI / 2).multiplyScalar(speed))
-
-        if(this.keydown.has('d')) this.blaster.position.add(strafeDirection.applyAxisAngle(upVector, -Math.PI / 2).multiplyScalar(speed))
-
-
-        // when space is pressed the gun shoots
-        if(this.keydown.has(' ')) this.createBullet()
+        if(this.keydown.has('a')) this.blaster.position.add(strafeDirection.applyAxisAngle(upVector, Math.PI / 2).multiplyScalar(this.movementSpeed))
+        if(this.keydown.has('d')) this.blaster.position.add(strafeDirection.applyAxisAngle(upVector, -Math.PI / 2).multiplyScalar(this.movementSpeed))
     }
 
-    update()
+    updateBullets()
     {
-        this.updateInput()
+        for(let i = 0; i < this.bullets.length; i++)
+        {
+            const bullet = this.bullets[i]
+            bullet.update()
+
+            if(!bullet.getStatus)
+            {
+                this.remove(bullet.group)
+                this.bullets.splice(i--, 1)
+            }
+            else
+            {
+                for(let j = 0; j < this.targets.length; j++)
+                {
+                    const target = this.targets[j]
+                    if(target.position.distanceToSquared(bullet.group.position) < 0.05)
+                    {
+                        this.remove(bullet.group)
+                        this.bullets.splice(i--, 1)
+
+                        target.visible = false
+                        setTimeout(() => {
+                            target.visible = true
+                        }, 1000)
+                    }
+                }
+            }
+        }
     }
 
     private async createTarget(material: MTLLoader.MaterialCreator)
@@ -163,5 +201,9 @@ export default class GameScene extends THREE.Scene
         bulletModel.rotation.copy(this.blaster.rotation)
 
         this.add(bulletModel)
+
+        const bulletInstance = new Bullet(bulletModel)
+        bulletInstance.setVelocity(this.directionVector.x * this.bulletSpeed, this.directionVector.y * this.bulletSpeed, this.directionVector.z * this.bulletSpeed)
+        this.bullets.push(bulletInstance)
     }
 }
