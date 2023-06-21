@@ -16,6 +16,7 @@ scene.initializeScene()
 
 function gameTick()
 {
+  scene.update()
   renderer.render(scene, mainCamera)
   requestAnimationFrame(gameTick)
 }
