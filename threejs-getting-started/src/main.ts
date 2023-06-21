@@ -11,7 +11,7 @@ renderer.setSize(width, height)
 
 const mainCamera = new THREE.PerspectiveCamera(60, width / height, 0.1, 100)
 
-const scene = new GameScene()
+const scene = new GameScene(mainCamera)
 scene.initializeScene()
 
 function gameTick()
