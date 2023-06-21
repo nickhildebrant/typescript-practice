@@ -15,6 +15,8 @@ export default class GameScene extends THREE.Scene
 
     private blaster?: THREE.Group
 
+    private bulletMaterial?: MTLLoader.MaterialCreator
+
     constructor(camera: THREE.PerspectiveCamera)
     {
         super()
@@ -26,6 +28,9 @@ export default class GameScene extends THREE.Scene
     {
         const targetMaterial = await this.materialLoader.loadAsync('assets/targetA.mtl')
         targetMaterial.preload()
+
+        this.bulletMaterial = await this.materialLoader.loadAsync('assets/foamBulletA-low.mtl')
+        this.bulletMaterial.preload()
 
         const redMaterial = new THREE.MeshPhongMaterial({color: 0xFF0000})
         const greenMaterial = new THREE.MeshPhongMaterial({color: 0x00FF00})
@@ -136,5 +141,12 @@ export default class GameScene extends THREE.Scene
 
         const modelRoot = await this.objectLoader.loadAsync('assets/blasterG.obj')
         return modelRoot
+    }
+
+    private async create()
+    {
+        if(!this.blaster) return
+
+        if(this.bulletMaterial) this.objectLoader.setMaterials(this.bulletMaterial)
     }
 }
